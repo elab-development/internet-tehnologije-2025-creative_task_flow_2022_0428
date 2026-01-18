@@ -6,6 +6,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -21,6 +23,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role'
     ];
 
     /**
@@ -44,5 +47,31 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+     // User ↔ Project (M:N) preko project_user.
+    public function projects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class, 'project_user')
+            ->using(ProjectUser::class)
+            ->withTimestamps();
+    }
+
+    // User → Task (1:N) kao izvršilac zadatka.
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    // User → Comment (1:N) kao autor komentara.
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    // User → Attachment (1:N) kao uploader fajla.
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(Attachment::class);
     }
 }
