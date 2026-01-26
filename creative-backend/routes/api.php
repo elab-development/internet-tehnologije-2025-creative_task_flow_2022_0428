@@ -42,4 +42,18 @@ Route::middleware('auth:sanctum')->group(function () {
         // Metrics
         Route::get('/projects/{id}/metrics', [ManagerController::class, 'projectMetrics']);
     });
+
+    //Specialist
+    Route::prefix('specialist')->group(function () {
+        Route::get('/tasks', [SpecialistController::class, 'myTasks']);
+        Route::get('/tasks/{id}', [SpecialistController::class, 'taskDetails']);
+
+        Route::put('/tasks/{id}/status', [SpecialistController::class, 'updateTaskStatus']);
+
+        Route::post('/tasks/{taskId}/comments', [SpecialistController::class, 'addComment']);
+        Route::delete('/comments/{commentId}', [SpecialistController::class, 'deleteComment']);
+
+        Route::post('/tasks/{taskId}/attachments', [SpecialistController::class, 'addAttachment']);
+        Route::delete('/attachments/{attachmentId}', [SpecialistController::class, 'deleteAttachment']);
+    });
 });
