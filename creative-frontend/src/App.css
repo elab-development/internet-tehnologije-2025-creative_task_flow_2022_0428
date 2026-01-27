@@ -1,38 +1,502 @@
-.App {
-  text-align: center;
+/* ===================== */
+/* CREATIVE TASK FLOW UI */
+/* AUTH PAGES (GIRLY)    */
+/* ===================== */
+
+/* Paleta boja (osnova + dopune). */
+:root {
+  --bronze: #E19F66;
+  --cyan: #508991;
+  --ink: #19323C;
+  --mint: #F3F7F0;
+
+  /* Dopune za “slatko”, mekše i čitljivije. */
+  --peach: #F7E2D3;
+  --teal-soft: #A9C9C6;
+  --border: #D8E3DD;
+
+  --text: #19323C;
+  --text-soft: rgba(25, 50, 60, 0.75);
+  --white: #ffffff;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+/* Stranica: svetla pozadina, bez crne. */
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: linear-gradient(180deg, var(--cyan), var(--ink));
+  color: var(--text);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
+/* Kartica: “stariji” izgled, veći radius, blage senke. */
+.auth-card {
+  width: min(1400px, 100%);
+  min-height: 800px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-radius: 26px;
+  overflow: hidden;
+  background: var(--white);
+  border: 2px solid var(--border);
+  box-shadow: 0 12px 30px rgba(25, 50, 60, 0.10);
+}
+
+/* Varijanta gde je slika veća (60/40). */
+.auth-card--imageBig {
+  grid-template-columns: 60% 40%;
+}
+
+/* Levo: slika velika + nežni overlay. */
+.auth-left {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  padding: 26px;
+  display: flex;
+  align-items: flex-end;
+}
+
+/* Overlay: girly, mint + rose, ali da se tekst vidi. */
+.auth-left-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(80, 137, 145, 0.18),
+    rgba(231, 143, 179, 0.22)
+  );
+}
+
+/* Dodatni “vellum” panel za tekst (kao stari dizajn). */
+.auth-left-content {
+  position: relative;
+  z-index: 1;
+  max-width: 600px;
+  background: rgba(243, 247, 240, 0.82);
+  border: 1px solid rgba(216, 227, 221, 0.95);
+  border-radius: 18px;
+  padding: 16px 16px 14px 16px;
+  box-shadow: 0 10px 18px rgba(25, 50, 60, 0.10);
+  color: var(--text);
+}
+
+/* “Brand” kao mala etiketa. */
+.auth-brand {
+  display: inline-block;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  font-size: 15px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(225, 159, 102, 0.22);
+  border: 1px solid rgba(225, 159, 102, 0.35);
+  margin-bottom: 10px;
+}
+
+/* Naslov: malo “sladak”, ne previše moderan. */
+.auth-title {
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 900;
+  margin: 0 0 10px 0;
+  color: var(--ink);
+}
+
+/* Subtitle: čitljiv, mekši. */
+.auth-subtitle {
+  font-size: 18px;
+  line-height: 1.45;
+  color: var(--text-soft);
+  margin: 0;
+}
+
+/* Desno: forma, pastelne pozadine. */
+.auth-right {
+  padding: 28px 26px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, rgba(243, 247, 240, 0.75), rgba(247, 226, 211, 0.55));
+}
+
+.auth-form-wrap {
+  width: min(360px, 100%);
+  color: var(--text);
+}
+
+/* Forma: veći razmaci (klasično). */
+.auth-form {
+  display: grid;
+  gap: 20px;
+}
+
+.auth-label {
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(25, 50, 60, 0.85);
+  display: grid;
+  gap: 7px;
+}
+
+/* Input: svetliji, “old-school” */
+.auth-input {
+  height: 44px;
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--text);
+  padding: 0 12px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-input::placeholder {
+  color: rgba(25, 50, 60, 0.45);
+}
+
+.auth-input:focus {
+  border-color: rgba(80, 137, 145, 0.7);
+  box-shadow: 0 0 0 4px rgba(80, 137, 145, 0.18);
+}
+
+/* Greška: roze, ali nežno. */
+.auth-error {
+  border: 2px solid rgba(231, 143, 179, 0.55);
+  background: rgba(231, 143, 179, 0.14);
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 16px;
+  color: rgba(25, 50, 60, 0.9);
+}
+
+.button {
+  height: 46px;
+  border-radius: 16px;
+  border: 0;
+  font-weight: 900;
+  cursor: pointer;
+  margin-top: 4px;
+  box-shadow: 0 10px 18px rgba(25, 50, 60, 0.12);
+  transition: transform 0.08s ease, filter 0.15s ease;
+  font-size: 18px;
+  background-color: var(--bronze);
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+.button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+
+
+.button:hover {
+  filter: brightness(1.03);
+}
+
+/* Linkovi i footer ispod forme. */
+.auth-small {
+  font-size: 15px;
+  color: rgba(25, 50, 60, 0.8);
+  margin-top: 8px;
+}
+
+.auth-link {
+  color: var(--cyan);
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+/* Responsive: na telefonu ide jedan ispod drugog. */
+@media (max-width: 900px) {
+  .auth-card,
+  .auth-card--imageBig {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .auth-left {
+    min-height: 260px; /* slika i dalje velika na mobile */
+  }
+
+  .auth-right {
+    padding: 18px;
   }
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+/* ===================== */
+/* GLOBAL UI (shared).   */
+/* ===================== */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  color: var(--text);
+  background: #F7E2D3
+}
+
+/* Layout wrapper koji možeš koristiti na svim stranicama. */
+.container {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: 22px;
+}
+
+/* “Page” blokovi (naslov + opis + sadržaj). */
+.page-title {
+  margin: 0 0 6px 0;
+  font-size: 34px;
+  font-weight: 900;
+  color: var(--mint);
+}
+
+.page-subtitle {
+  margin: 0 0 18px 0;
+  font-size: 16px;
+  color: rgba(243, 247, 240, 0.85);
+}
+
+/* Kartice za sadržaj (stariji, slatki izgled). */
+.card {
+  background: rgba(243, 247, 240, 0.92);
+  border: 2px solid var(--border);
+  border-radius: 22px;
+  box-shadow: 0 12px 26px rgba(25, 50, 60, 0.12);
+  padding: 18px;
+}
+
+.card + .card {
+  margin-top: 14px;
+}
+
+/* Grid helperi. */
+.grid {
+  display: grid;
+  gap: 14px;
+}
+
+.grid--2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 900px) {
+  .grid--2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Inputi/forme globalno (ako ti zatreba van auth). */
+.input {
+  height: 44px;
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text);
+  padding: 0 12px;
+  outline: none;
+}
+
+.input:focus {
+  border-color: rgba(80, 137, 145, 0.7);
+  box-shadow: 0 0 0 4px rgba(80, 137, 145, 0.18);
+}
+
+/* Badge (statusi, role, itd). */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 12px;
+  border: 1px solid rgba(25, 50, 60, 0.12);
+}
+
+.badge--soft {
+  background: rgba(225, 159, 102, 0.22);
+  color: var(--ink);
+}
+
+.badge--mint {
+  background: rgba(243, 247, 240, 0.95);
+  color: var(--ink);
+}
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 2px solid var(--border);
+  background-color: var(--ink);
+}
+
+.nav__container {
+  width: 100%;
+  margin: 0;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background-color: #508991;
+}
+
+/* Levo */
+.nav__left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.nav__logoWrap {
+  width: 150px;
+  height: 44px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid rgba(80, 137, 145, 0.25);
+  background: var(--mint);
+  flex: 0 0 auto;
+}
+
+.nav__logoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* bitno: da ne seče logo */
+  display: block;
+}
+
+.nav__brand {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.nav__title {
+  font-weight: 1000;
+  font-size: 25px;
+  color: var(--ink);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.nav__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  color: rgba(25, 50, 60, 0.75);
+  white-space: nowrap;
+}
+
+.nav__role {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 2px solid rgba(80, 137, 145, 0.22);
+  background: rgba(255, 255, 255, 0.35);
+  font-weight: 900;
+  color: var(--ink);
+}
+
+/* Centar */
+.nav__center {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex: 1;              /* ovo gura centar u sredinu */
+}
+
+.nav__link {
+  text-decoration: none;
+  font-weight: 900;
+  color: var(--ink);
+  font-size: 20px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.nav__link:hover {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(80, 137, 145, 0.22);
+}
+
+.nav__link--active {
+  background: var(--peach);
+  border-color: rgba(80, 137, 145, 0.28);
+}
+
+/* Desno */
+.nav__right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.nav__logout {
+  border: 2px solid rgba(80, 137, 145, 0.22);
+  background: rgba(255, 255, 255, 0.35);
+  color: var(--ink);
+  font-weight: 1000;
+  padding: 10px 14px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.nav__logout:hover {
+  background: var(--peach);
+}
+
+@media (max-width: 820px) {
+  .nav__container {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .nav__center {
+    justify-content: flex-start;
+    width: 100%;
+  }
+}
+
+
+/* Dugme (ti već koristiš .button) – samo mali polish da se uklopi svuda. */
+.button {
+  padding: 0 16px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  gap: 8px;
 }
 
-.App-link {
-  color: #61dafb;
+
+.linkButton {
+  background: transparent;
+  border: none;
+  color: var(--cyan);
+  font-weight: 900;
+  cursor: pointer;
+  padding: 0;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.linkButton:hover {
+  text-decoration: underline;
 }
+
+
