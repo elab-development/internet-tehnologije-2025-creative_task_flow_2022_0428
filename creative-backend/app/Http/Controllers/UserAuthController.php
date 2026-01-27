@@ -14,15 +14,13 @@ class UserAuthController extends Controller
         $validated = $request->validate([
             'name'     => ['required', 'string', 'max:255'],
             'email'    => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:6'],
-            'profile_photo' => ['nullable', 'string', 'url', 'max:2048'],
+            'password' => ['required', 'string', 'min:6']
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role' => 'specialist',
-            'profile_photo' => $validated['profile_photo'],
             'password' => Hash::make($validated['password']),
         ]);
 
