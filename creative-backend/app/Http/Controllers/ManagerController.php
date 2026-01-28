@@ -268,6 +268,57 @@ class ManagerController extends Controller
         ]);
     }
 
+    // Uklanjanje člana sa projekta
+    public function removeMember(Request $request, int $id, int $userId)
+    {
+        if ($resp = $this->managerCheck($request)) return $resp;
+
+        $project = $this->loadProjectForManagerOrFail($request, $id);
+        if ($project instanceof \Illuminate\Http\JsonResponse) return $project;
+
+        $managerId = $request->user()->id;
+
+        // Menadžer ne može ukloniti sebe sa projekta
+        if ($userId === $managerId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Uklanjanje nije dozvoljeno.',
+                'errors'  => (object)[
+                    'user' => ['Ne možete ukloniti sebe sa projekta.'],
+                ],
+            ], 409);
+        }
+
+        // Provera da li je user uopšte član projekta
+        $exists = $project->users()->where('users.id', $userId)->exists();
+        if (!$exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Korisnik nije član projekta.',
+                'errors'  => (object)[
+                    'user' => ['Korisnik sa prosleđenim ID nije član projekta.'],
+                ],
+            ], 404);
+        }
+
+        // Uklanjanje iz pivot tabele (project_user)
+        $project->users()->detach($userId);
+
+        // Po želji: vrati osveženu listu članova
+        $project->load('users');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Član je uspešno uklonjen sa projekta.',
+            'data' => [
+                'users' => UserResource::collection($project->users),
+            ],
+        ]);
+    }
+
+
+
+
     //kreiranje taska za clana na projektu
     public function createTask(Request $request, int $projectId)
     {
