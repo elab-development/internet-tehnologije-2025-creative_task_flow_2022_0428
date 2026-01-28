@@ -770,6 +770,95 @@ body {
   margin-top: 6px;
 }
 
+/* Reusable modal */
+.ctfModal__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(25, 50, 60, 0.35);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  z-index: 999;
+}
+
+.ctfModal__box {
+  width: min(720px, 100%);
+  height: auto;
+}
+
+/* Manje X dugme u headeru */
+.ctfBtn--small {
+  height: 42px;
+  font-size: 16px;
+  padding: 0 14px;
+}
+
+/* Manager member card */
+.mgrMemberCard {
+  height: auto;
+  padding: 16px;
+}
+
+.mgrMemberCard__head {
+  align-items: flex-start;
+}
+
+.mgrMemberCard__avatar {
+  width: 120px;
+  height: 140px;
+  border-radius: 18px;
+}
+
+.mgrMemberCard__name {
+  font-size: 22px;
+}
+
+.mgrMemberCard__link {
+  display: inline-block;
+  margin-top: 8px;
+  font-weight: 900;
+  color: var(--cyan);
+  text-decoration: none;
+}
+
+.mgrMemberCard__link:hover {
+  text-decoration: underline;
+}
+
+.mgrMemberCard__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Manager project section */
+.mgrProjectSection {
+  height: auto;
+}
+
+.mgrProjectSection__metaSep {
+  margin-left: 10px;
+}
+
+/* 3 kartice u redu (kao AdminUsers) */
+.mgrProjectSection__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+@media (max-width: 980px) {
+  .mgrProjectSection__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .mgrProjectSection__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
 
 
 
