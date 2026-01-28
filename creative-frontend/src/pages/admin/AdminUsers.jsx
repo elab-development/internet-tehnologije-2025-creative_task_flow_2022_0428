@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { api, extractErrorMessage } from "../../api";
+import SimpleModal from "../../components/SimpleModal";
 
 const ROLES = [
   { value: "specialist", label: "specialist" },
@@ -7,7 +8,6 @@ const ROLES = [
   { value: "admin", label: "admin" },
 ];
 
-//inicijali korisnika
 function getInitials(name) {
   if (!name) return "?";
   return name
@@ -18,77 +18,70 @@ function getInitials(name) {
     .join("");
 }
 
-//default vrednosti kada se forma otvori
+//prazna forma - da refreshujemo podatke
 function emptyForm() {
   return {
     name: "",
     email: "",
     role: "specialist",
-    profile_photo: "",
+    profile_photo: "", 
     password: "",
   };
 }
 
 export default function AdminUsers() {
-  //promenljive koje ce nam trebati
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState(null);
+
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+  // Search + paginacija (client-side)
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 3; 
 
-  // Modal
+  // Modal state (create/edit)
   const [modalOpen, setModalOpen] = useState(false);
   const [mode, setMode] = useState("create"); // create i edit
   const [editingUserId, setEditingUserId] = useState(null);
   const [form, setForm] = useState(emptyForm());
 
-
-  //poziv ka backendu
+  // Učitavanje liste korisnika (admin endpoint)
   const loadUsers = async () => {
-    setLoading(true); //krece izvrsavanje funkcije, imamo status loading na true, dok se ne zavrsi sve
+    setLoading(true);
     setError("");
     setNotice("");
 
     try {
-      //pozivamo backend rutu i uzimamo listu korisnika koju setujemo na tu vracenu listu
       const res = await api.get("/admin/users");
       const list = res?.data?.data?.users || [];
       setUsers(list);
     } catch (e) {
       setError(extractErrorMessage(e));
     } finally {
-      //kad se sve zavrsi stavljamo loading na false sto znaci da je izvrseno vracanje
       setLoading(false);
     }
   };
 
-  //svaki put kada se desi izmena ponovo se ucitavaju korisnici
+  //svaki put se ucita lista korisnika
   useEffect(() => {
     loadUsers();
   }, []);
 
+  // Memoizovana filtracija korisnika.Pokreće se samo kada se promene `users` ili `search`.
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return users;
 
- // Memoizovana filtracija korisnika. Pokreće se samo kada se promene `users` ili `search`
-const filtered = useMemo(() => {
-  // Normalizujemo unos (trim + lowercase) da pretraga bude "case-insensitive".
-  const q = search.trim().toLowerCase();
+    return users.filter((u) => {
+      const name = (u?.name || "").toLowerCase();
+      return name.includes(q);
+    });
+  }, [users, search]);
 
-  // Ako nema unosa za pretragu, vraćamo sve korisnike
-  if (!q) return users;
-
-  // Filtriramo samo po imenu
-  return users.filter((u) => {
-    const name = (u?.name || "").toLowerCase(); //poklapanje imena
-    return name.includes(q); //ako sadrzi bar 1 slovo pretrazuje sve
-  });
-}, [users, search]);
-
-  //racunanje ukupnog broja stranica
+  // Paginacija (client-side)
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
 
@@ -97,12 +90,12 @@ const filtered = useMemo(() => {
     return filtered.slice(start, start + pageSize);
   }, [filtered, safePage]);
 
+  // Kad se promeni search, vraćamo na prvu stranu
   useEffect(() => {
     setPage(1);
-  }, [search]); //svaki put kad se promeni kriterijum pretrage vraca se korisnik na prvu stranicu
-  
+  }, [search]);
 
-  //stavlja se status modala na create- da zna koji modal da prikaze, setuje se empty forma i open modal na true
+  //otvaranje create novog korisnika
   const openCreate = () => {
     setMode("create");
     setEditingUserId(null);
@@ -112,7 +105,7 @@ const filtered = useMemo(() => {
     setModalOpen(true);
   };
 
-  //stavlja se status modala na edit- da zna koji modal da prikaze, setuje se empty forma i open modal na true
+  //otvaranje editovanja
   const openEdit = (u) => {
     setMode("edit");
     setEditingUserId(u.id);
@@ -121,26 +114,26 @@ const filtered = useMemo(() => {
       email: u?.email || "",
       role: u?.role || "specialist",
       profile_photo: u?.profile_photo || "",
-      password: "",
+      password: "", // opciono resetovanje lozinke
     });
     setError("");
     setNotice("");
     setModalOpen(true);
   };
 
-  //zatvara se modal, brise se id korisnika za editovanje i prazni se forma
+  //zatvaranje modala
   const closeModal = () => {
     setModalOpen(false);
     setEditingUserId(null);
     setForm(emptyForm());
   };
 
-  //svaki put kad se desi izmena u inputu korisnika, menja se forma sa tim vrednostima
+  // Helper za inpute u formi
   const onChange = (key) => (e) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
   };
 
-  //fja za submit forme - azuriranje ili kreiranje 
+  // Submit forme (create/update)
   const submit = async (e) => {
     e.preventDefault();
     setError("");
@@ -148,6 +141,7 @@ const filtered = useMemo(() => {
 
     try {
       if (mode === "create") {
+        // Create korisnika (admin)
         const payload = {
           name: form.name,
           email: form.email,
@@ -156,29 +150,34 @@ const filtered = useMemo(() => {
           password: form.password,
         };
 
-        //kreiranje novog korisnika i slanje podataka
         const res = await api.post("/admin/users", payload);
         const created = res?.data?.data?.user;
 
+        // Odmah prikaži promenu (ubaci na vrh)
         if (created) setUsers((prev) => [created, ...prev]);
         else await loadUsers();
 
-        setNotice("Korisnik je uspešno kreiran."); //obavestenje
-        closeModal(); //zatvara se modal
+        setNotice("Korisnik je uspešno kreiran.");
+        closeModal();
       } else {
+        // Update korisnika (admin)
         const payload = {
           name: form.name,
           email: form.email,
           role: form.role,
+          // Backend trenutno ne prima profile_photo u update validaciji
           ...(form.password ? { password: form.password } : {}),
         };
 
-        //azuriranje korisnika
         const res = await api.put(`/admin/users/${editingUserId}`, payload);
         const updated = res?.data?.data?.user;
 
-        if (updated) setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
-        else await loadUsers();
+        // Odmah prikaži promenu
+        if (updated) {
+          setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+        } else {
+          await loadUsers();
+        }
 
         setNotice("Korisnik je uspešno ažuriran.");
         closeModal();
@@ -188,7 +187,7 @@ const filtered = useMemo(() => {
     }
   };
 
-  //brisanje korisnika
+  // Brisanje korisnika (sa confirm) + instant UI update
   const removeUser = async (u) => {
     const ok = window.confirm(`Da li sigurno želiš da obrišeš korisnika: ${u.name} (${u.email})?`);
     if (!ok) return;
@@ -198,7 +197,9 @@ const filtered = useMemo(() => {
     setNotice("");
 
     try {
-      await api.delete(`/admin/users/${u.id}`); //zove se backend
+      await api.delete(`/admin/users/${u.id}`);
+
+      // Odmah ukloni iz UI
       setUsers((prev) => prev.filter((x) => x.id !== u.id));
       setNotice("Korisnik je uspešno obrisan.");
     } catch (e) {
@@ -216,7 +217,7 @@ const filtered = useMemo(() => {
         <section className="card-admin">
           <div className="card-head">
             <div>
-              <div className="muted">Pregled, kreiranje, izmena i brisanje korisnika. Dostupno samo adminu</div>
+              <div className="muted">Pregled, kreiranje, izmena i brisanje korisnika (dostupno samo adminu)</div>
             </div>
 
             <button className="button" type="button" onClick={openCreate} disabled={loading}>
@@ -236,11 +237,16 @@ const filtered = useMemo(() => {
               className="input adminUsers__search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Pretraga: ime, email ili uloga"
+              placeholder="Pretraga po imenu"
             />
+
+            <button className="button" type="button" onClick={loadUsers} disabled={loading}>
+              {loading ? "Učitavam..." : "Osveži"}
+            </button>
           </div>
 
-          
+          <div className="divider" />
+
           {/* GRID KARTICA: 3 u redu */}
           <div className="adminUsers__grid">
             {paged.length === 0 ? (
@@ -303,7 +309,7 @@ const filtered = useMemo(() => {
             </button>
 
             <div className="muted">
-              Strana {safePage} od {totalPages}. Ukupno: {filtered.length}.
+              Strana {safePage} od {totalPages} | Ukupno: {filtered.length}
             </div>
 
             <button
@@ -317,89 +323,80 @@ const filtered = useMemo(() => {
           </div>
         </section>
 
-        {/* MODAL */}
+        {/* MODAL (reusable SimpleModal) */}
         {modalOpen ? (
-          <div className="adminUsers__modalOverlay" onMouseDown={closeModal} role="presentation">
-            <div className="card adminUsers__modal" onMouseDown={(e) => e.stopPropagation()}>
-              <div className="card-head">
-                <div>
-                  <div className="card-title">{mode === "create" ? "Novi korisnik" : "Izmena korisnika"}</div> 
-                  <div className="muted">
-                    {mode === "create"
-                      ? "Popuni podatke i dodeli ulogu."
-                      : "Menjaš ime, email, ulogu i opciono lozinku."}
-                  </div>
-                </div>
+          <SimpleModal
+            title={mode === "create" ? "Novi korisnik" : "Izmena korisnika"}
+            subtitle={
+              mode === "create"
+                ? "Popuni podatke i dodeli ulogu"
+                : "Menjaš ime, email, ulogu i opciono lozinku"
+            }
+            onClose={closeModal}
+          >
+            {error ? <div className="alert">{error}</div> : null}
 
-                <button className="button adminUsers__btn" type="button" onClick={closeModal}>
-                  X
-                </button>
-              </div>
+            <form className="adminUsers__form" onSubmit={submit}>
+              <label className="adminUsers__label">
+                Ime
+                <input className="input" value={form.name} onChange={onChange("name")} required />
+              </label>
 
-              {error ? <div className="alert">{error}</div> : null}
+              <label className="adminUsers__label">
+                Email
+                <input className="input" value={form.email} onChange={onChange("email")} required />
+              </label>
 
-              <form className="adminUsers__form" onSubmit={submit}>
+              <label className="adminUsers__label">
+                Uloga
+                <select className="input" value={form.role} onChange={onChange("role")} required>
+                  {ROLES.map((r) => (
+                    <option key={r.value} value={r.value}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {mode === "create" ? (
                 <label className="adminUsers__label">
-                  Ime
-                  <input className="input" value={form.name} onChange={onChange("name")} required />
-                </label>
-
-                <label className="adminUsers__label">
-                  Email
-                  <input className="input" value={form.email} onChange={onChange("email")} required />
-                </label>
-
-                <label className="adminUsers__label">
-                  Uloga
-                  <select className="input" value={form.role} onChange={onChange("role")} required>
-                    {ROLES.map((r) => (
-                      <option key={r.value} value={r.value}>
-                        {r.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                {mode === "create" ? (
-                  <label className="adminUsers__label">
-                    Profile photo link (opciono)
-                    <input
-                      className="input"
-                      value={form.profile_photo}
-                      onChange={onChange("profile_photo")}
-                      placeholder="https://..."
-                    />
-                  </label>
-                ) : (
-                  <div className="muted" style={{ marginTop: 4 }}>
-                    Photo link se menja kasnije (backend update trenutno ne prima profile_photo).
-                  </div>
-                )}
-
-                <label className="adminUsers__label">
-                  {mode === "create" ? "Lozinka." : "Nova lozinka. (opciono)"}
+                  Profile photo link (opciono)
                   <input
                     className="input"
-                    type="password"
-                    value={form.password}
-                    onChange={onChange("password")}
-                    placeholder={mode === "create" ? "" : "Ostavi prazno ako ne menjaš"}
-                    required={mode === "create"}
+                    value={form.profile_photo}
+                    onChange={onChange("profile_photo")}
+                    placeholder="https://..."
                   />
                 </label>
-
-                <div className="adminUsers__formActions">
-                  <button className="button" type="submit">
-                    {mode === "create" ? "Kreiraj" : "Sačuvaj"}
-                  </button>
-
-                  <button className="button button--disabled" type="button" onClick={closeModal}>
-                    Odustani
-                  </button>
+              ) : (
+                <div className="muted" style={{ marginTop: 4 }}>
+                  Photo link se menja kasnije (backend update trenutno ne prima profile_photo)
                 </div>
-              </form>
-            </div>
-          </div>
+              )}
+
+              <label className="adminUsers__label">
+                {mode === "create" ? "Lozinka" : "Nova lozinka (opciono)"}
+                <input
+                  className="input"
+                  type="password"
+                  value={form.password}
+                  onChange={onChange("password")}
+                  placeholder={mode === "create" ? "" : "Ostavi prazno ako ne menjaš"}
+                  required={mode === "create"}
+                />
+              </label>
+
+              <div className="adminUsers__formActions">
+                <button className="button" type="submit">
+                  {mode === "create" ? "Kreiraj" : "Sačuvaj"}
+                </button>
+
+                <button className="button button--disabled" type="button" onClick={closeModal}>
+                  Odustani
+                </button>
+              </div>
+            </form>
+          </SimpleModal>
         ) : null}
       </div>
     </div>
