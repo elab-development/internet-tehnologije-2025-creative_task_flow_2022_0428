@@ -858,6 +858,158 @@ body {
   }
 }
 
+/* ========================= */
+/* MANAGER METRICS PAGE.     */
+/* ========================= */
+
+.metrics__intro {
+  margin-bottom: 14px;
+}
+
+.metrics__selectorGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.metrics__selectorLabel {
+  max-width: 900px;
+}
+
+.metrics__notice {
+  border-color: rgba(80, 137, 145, 0.35);
+}
+
+.metrics__projectHeaderCard {
+  height: auto;
+  margin-bottom: 18px;
+}
+
+.metrics__kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.metrics__kpiCard {
+  height: auto;
+}
+
+.metrics__kpiLabel {
+  font-weight: 900;
+}
+
+.metrics__kpiValue {
+  font-weight: 1000;
+  font-size: 36px;
+  margin-top: 6px;
+}
+
+.metrics__chartsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 1100px) {
+  .metrics__kpiGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .metrics__chartsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .metrics__kpiGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========================= */
+/* DONUT CHART (no library). */
+/* ========================= */
+
+.metricsDonut__card {
+  height: auto;
+}
+
+.metricsDonut__wrap {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+@media (max-width: 520px) {
+  .metricsDonut__wrap {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+}
+
+.metricsDonut__circle {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  position: relative;
+  border: 1px solid rgba(80, 137, 145, 0.22);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  margin: 6px 0;
+}
+
+.metricsDonut__inner {
+  position: absolute;
+  inset: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(80, 137, 145, 0.18);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 10px;
+}
+
+.metricsDonut__total {
+  font-weight: 1000;
+  font-size: 26px;
+  color: rgba(13, 52, 66, 0.95);
+}
+
+.metricsDonut__legend {
+  display: grid;
+  gap: 10px;
+}
+
+.metricsDonut__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.metricsDonut__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.metricsDonut__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.metricsDonut__pct {
+  font-weight: 900;
+  opacity: 0.85;
+}
 
 
 

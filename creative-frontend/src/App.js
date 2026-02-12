@@ -13,7 +13,6 @@ import ManagerProjectDetails from "./pages/manager/ManagerProjectsDetails";
 import ManagerProjectMetrics from "./pages/manager/ManagerProjectMetrics";
 
 import AdminUsers from "./pages/admin/AdminUsers";
-import AdminMetrics from "./pages/admin/AdminMetrics";
 
 import Profile from "./pages/Profile";
 
@@ -163,7 +162,7 @@ export default function App() {
           element={requireRole(["manager"], <ManagerProjectDetails />)}
         />
         <Route
-          path="/manager/projects/:id/metrics"
+          path="/manager/metrics"
           element={requireRole(["manager"], <ManagerProjectMetrics />)}
         />
 
@@ -171,10 +170,7 @@ export default function App() {
           path="/admin/users"
           element={requireRole(["admin"], <AdminUsers />)}
         />
-        <Route
-          path="/admin/metrics"
-          element={requireRole(["admin"], <AdminMetrics />)}
-        />
+      
 
         <Route path="*" element={<Navigate to={token ? homeRoute : "/login"} replace />} />
       </Routes>

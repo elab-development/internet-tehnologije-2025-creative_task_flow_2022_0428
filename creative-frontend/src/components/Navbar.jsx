@@ -65,9 +65,6 @@ export default function Navbar({ user, onLogout }) {
               <NavLink to="/admin/users" className={linkClass}>
                 Korisnici
               </NavLink>
-              <NavLink to="/admin/metrics" className={linkClass}>
-                Metrike
-              </NavLink>
             </>
           ) : null}
         </nav>
