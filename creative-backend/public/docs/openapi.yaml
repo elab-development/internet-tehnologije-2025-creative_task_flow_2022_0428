@@ -1,0 +1,1352 @@
+openapi: 3.0.3
+info:
+  title: Creative Task Flow REST API
+  version: "1.0.0"
+  description: |
+    Swagger/OpenAPI specifikacija za Creative Task Flow.
+    Server radi na: http://127.0.0.1:8000, a sve rute su pod /api.
+
+    ## Uloge
+    - admin: upravlja korisnicima.
+    - manager: upravlja projektima, članovima, taskovima i metrikama.
+    - specialist: vidi svoje taskove i može da menja status, dodaje komentare i priloge.
+
+servers:
+  - url: /
+    description: Same origin
+
+tags:
+  - name: Auth
+  - name: Admin
+  - name: Manager
+  - name: Specialist
+  - name: Uploads
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: |
+        U Authorize unesi token iz login/register response-a.
+        Format: Bearer <token>.
+
+  schemas:
+    ErrorEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        message: { type: string, example: "Nemate prava pristupa." }
+        errors:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: array
+                items: { type: string }
+              - type: string
+      example:
+        success: false
+        message: "Nemate prava pristupa."
+        errors:
+          auth: ["Samo administrator može izvršiti ovu akciju."]
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        message: { type: string, example: "The given data was invalid." }
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+      example:
+        message: "The given data was invalid."
+        errors:
+          email: ["The email field is required."]
+
+    SuccessEmptyEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "OK." }
+        data: { type: object }
+      example:
+        success: true
+        message: "OK."
+        data: {}
+
+    User:
+      type: object
+      properties:
+        id: { type: integer, example: 1 }
+        name: { type: string, example: "Ana Anić" }
+        email: { type: string, format: email, example: "ana@gmail.com" }
+        role:
+          type: string
+          enum: [specialist, manager, admin]
+          example: specialist
+        profile_photo:
+          type: string
+          nullable: true
+          example: "https://images.pexels.com/photos/123/pexels-photo-123.jpeg"
+
+    Project:
+      type: object
+      properties:
+        id: { type: integer, example: 10 }
+        name: { type: string, example: "Marketing Website Redesign" }
+        description: { type: string, nullable: true, example: "Redizajn landing stranice." }
+        status:
+          type: string
+          enum: [planned, active, completed, archived]
+          example: active
+        start_date: { type: string, format: date, nullable: true, example: "2026-02-01" }
+        end_date: { type: string, format: date, nullable: true, example: "2026-03-01" }
+        users:
+          type: array
+          nullable: true
+          items: { $ref: "#/components/schemas/User" }
+        tasks:
+          type: array
+          nullable: true
+          items: { $ref: "#/components/schemas/Task" }
+        tasks_count: { type: integer, nullable: true, example: 8 }
+
+    Task:
+      type: object
+      properties:
+        id: { type: integer, example: 55 }
+        project_id: { type: integer, example: 10 }
+        project_name: { type: string, nullable: true, example: "Marketing Website Redesign" }
+        user_id: { type: integer, example: 3 }
+        title: { type: string, example: "Design hero section" }
+        description: { type: string, nullable: true, example: "Uskladiti tipografiju i CTA dugme." }
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          example: high
+        status:
+          type: string
+          enum: [todo, inprogress, review, done]
+          example: inprogress
+        due_date: { type: string, format: date, nullable: true, example: "2026-02-20" }
+        user:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/User"
+
+    Comment:
+      type: object
+      properties:
+        id: { type: integer, example: 101 }
+        task_id: { type: integer, example: 55 }
+        user_id: { type: integer, example: 3 }
+        content: { type: string, example: "Završavam danas, šaljem u review." }
+        user:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/User"
+
+    Attachment:
+      type: object
+      properties:
+        id: { type: integer, example: 77 }
+        task_id: { type: integer, example: 55 }
+        user_id: { type: integer, example: 3 }
+        file_name: { type: string, example: "specifikacija.pdf" }
+        file_path: { type: string, example: "https://0x0.st/abcd.pdf" }
+        file_size: { type: integer, example: 204800 }
+        mime_type: { type: string, example: "application/pdf" }
+        user:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/User"
+
+    Metrics:
+      type: object
+      properties:
+        total_tasks: { type: integer, example: 12 }
+        completion_rate: { type: number, example: 41.7 }
+        overdue_tasks: { type: integer, example: 2 }
+        due_next_7_days: { type: integer, example: 3 }
+        tasks_by_status:
+          type: object
+          properties:
+            todo: { type: integer, example: 3 }
+            inprogress: { type: integer, example: 4 }
+            review: { type: integer, example: 2 }
+            done: { type: integer, example: 3 }
+        tasks_by_priority:
+          type: object
+          properties:
+            low: { type: integer, example: 2 }
+            medium: { type: integer, example: 5 }
+            high: { type: integer, example: 3 }
+            urgent: { type: integer, example: 2 }
+
+    RegisterRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name: { type: string, example: "Ana Anić" }
+        email: { type: string, format: email, example: "ana@gmail.com" }
+        password: { type: string, example: "Test1234" }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, example: "ana@gmail.com" }
+        password: { type: string, example: "Test1234" }
+
+    UpdateProfileRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, example: "Ana Anić" }
+        profile_photo:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://images.pexels.com/photos/123/pexels-photo-123.jpeg"
+
+    AuthData:
+      type: object
+      properties:
+        user: { $ref: "#/components/schemas/User" }
+        token: { type: string, example: "1|abc123..." }
+
+    AuthEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Prijava uspešna." }
+        data: { $ref: "#/components/schemas/AuthData" }
+
+    UserEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "OK." }
+        data:
+          type: object
+          properties:
+            user: { $ref: "#/components/schemas/User" }
+
+    UsersEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Lista korisnika je uspešno učitana." }
+        data:
+          type: object
+          properties:
+            users:
+              type: array
+              items: { $ref: "#/components/schemas/User" }
+
+    ProjectEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Projekat je uspešno kreiran." }
+        data:
+          type: object
+          properties:
+            project: { $ref: "#/components/schemas/Project" }
+
+    ProjectsEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Projekti su uspešno učitani." }
+        data:
+          type: object
+          properties:
+            projects:
+              type: array
+              items: { $ref: "#/components/schemas/Project" }
+
+    TaskEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Zadatak je uspešno kreiran." }
+        data:
+          type: object
+          properties:
+            task: { $ref: "#/components/schemas/Task" }
+
+    TasksEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Dodeljeni zadaci su uspešno učitani." }
+        data:
+          type: object
+          properties:
+            tasks:
+              type: array
+              items: { $ref: "#/components/schemas/Task" }
+
+    TaskDetailsEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Detalji zadatka su uspešno učitani." }
+        data:
+          type: object
+          properties:
+            task: { $ref: "#/components/schemas/Task" }
+            comments:
+              type: array
+              items: { $ref: "#/components/schemas/Comment" }
+            attachments:
+              type: array
+              items: { $ref: "#/components/schemas/Attachment" }
+
+    CommentEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Komentar je uspešno dodat." }
+        data:
+          type: object
+          properties:
+            comment: { $ref: "#/components/schemas/Comment" }
+
+    AttachmentEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Prilog je uspešno dodat." }
+        data:
+          type: object
+          properties:
+            attachment: { $ref: "#/components/schemas/Attachment" }
+
+    MetricsEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Metrike projekta su uspešno učitane." }
+        data:
+          type: object
+          properties:
+            metrics: { $ref: "#/components/schemas/Metrics" }
+
+    AdminCreateUserRequest:
+      type: object
+      required: [name, email, password, role]
+      properties:
+        name: { type: string, example: "Mila Milić" }
+        email: { type: string, format: email, example: "mila@gmail.com" }
+        password: { type: string, example: "Test1234" }
+        role:
+          type: string
+          enum: [specialist, manager, admin]
+          example: manager
+        profile_photo:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://images.pexels.com/photos/123/pexels-photo-123.jpeg"
+
+    AdminUpdateUserRequest:
+      type: object
+      required: [name, email, role]
+      properties:
+        name: { type: string, example: "Mila Milić" }
+        email: { type: string, format: email, example: "mila@gmail.com" }
+        role:
+          type: string
+          enum: [specialist, manager, admin]
+          example: manager
+        password:
+          type: string
+          nullable: true
+          description: Opciono resetovanje lozinke (min 6).
+          example: "NovaLozinka123"
+
+    ManagerCreateProjectRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, example: "Campaign Q2" }
+        description: { type: string, nullable: true, example: "Plan i realizacija kampanje." }
+        status:
+          type: string
+          enum: [planned, active, completed, archived]
+          nullable: true
+          example: active
+        start_date: { type: string, format: date, nullable: true, example: "2026-02-01" }
+        end_date: { type: string, format: date, nullable: true, example: "2026-03-01" }
+        member_ids:
+          type: array
+          nullable: true
+          items: { type: integer }
+          example: [3, 4, 7]
+
+    ManagerUpdateProjectRequest:
+      type: object
+      required: [name, status]
+      properties:
+        name: { type: string, example: "Campaign Q2" }
+        description: { type: string, nullable: true, example: "Ažuriran opis." }
+        status:
+          type: string
+          enum: [planned, active, completed, archived]
+          example: active
+        start_date: { type: string, format: date, nullable: true, example: "2026-02-01" }
+        end_date: { type: string, format: date, nullable: true, example: "2026-03-01" }
+
+    AddMembersRequest:
+      type: object
+      required: [user_ids]
+      properties:
+        user_ids:
+          type: array
+          minItems: 1
+          items: { type: integer }
+          example: [3, 4]
+
+    ManagerTaskUpsertRequest:
+      type: object
+      required: [user_id, title, priority, status]
+      properties:
+        user_id: { type: integer, example: 3 }
+        title: { type: string, example: "Design hero section" }
+        description: { type: string, nullable: true, example: "Opis zadatka." }
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          example: high
+        status:
+          type: string
+          enum: [todo, inprogress, review, done]
+          example: todo
+        due_date: { type: string, format: date, nullable: true, example: "2026-02-20" }
+
+    UpdateTaskStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [todo, inprogress, review, done]
+          example: review
+
+    AddCommentRequest:
+      type: object
+      required: [content]
+      properties:
+        content: { type: string, example: "Dodajem update u vezi taska." }
+
+    AddAttachmentRequest:
+      type: object
+      required: [file_name, file_path]
+      properties:
+        file_name: { type: string, example: "specifikacija.pdf" }
+        file_path:
+          type: string
+          format: uri
+          example: "https://0x0.st/abcd.pdf"
+        file_size: { type: integer, nullable: true, example: 204800 }
+        mime_type: { type: string, nullable: true, example: "application/pdf" }
+
+    Upload0x0ResponseEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Upload uspešan." }
+        data:
+          type: object
+          properties:
+            link: { type: string, example: "https://0x0.st/abcd.pdf" }
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/register:
+    post:
+      tags: [Auth]
+      summary: Register (public)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterRequest" }
+      responses:
+        "201":
+          description: Registracija uspešna.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthEnvelope" }
+        "422":
+          description: Validaciona greška.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+  /api/login:
+    post:
+      tags: [Auth]
+      summary: Login (public)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Prijava uspešna.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthEnvelope" }
+        "401":
+          description: Neuspešna prijava.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "422":
+          description: Validaciona greška.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+  /api/logout:
+    post:
+      tags: [Auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Uspešan logout.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessEmptyEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /api/profile:
+    put:
+      tags: [Auth]
+      summary: Update profile (name + optional profile_photo)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateProfileRequest" }
+      responses:
+        "200":
+          description: Profil ažuriran.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "422":
+          description: Validaciona greška.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+  /api/admin/users:
+    get:
+      tags: [Admin]
+      summary: List users (admin only)
+      responses:
+        "200":
+          description: Lista korisnika.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UsersEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+    post:
+      tags: [Admin]
+      summary: Create user (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminCreateUserRequest" }
+      responses:
+        "201":
+          description: Kreiran korisnik.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "422":
+          description: Validaciona greška.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+  /api/admin/users/{id}:
+    put:
+      tags: [Admin]
+      summary: Update user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 7
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminUpdateUserRequest" }
+      responses:
+        "200":
+          description: Korisnik ažuriran.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserEnvelope" }
+        "404":
+          description: Not found.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "422":
+          description: Validaciona greška.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+    delete:
+      tags: [Admin]
+      summary: Delete user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 7
+      responses:
+        "200":
+          description: Obrisano.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessEmptyEnvelope" }
+        "404":
+          description: Not found.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "409":
+          description: Conflict (admin ne može obrisati sebe).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /api/manager/projects:
+    get:
+      tags: [Manager]
+      summary: List my projects (manager only)
+      responses:
+        "200":
+          description: Lista projekata.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectsEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+    post:
+      tags: [Manager]
+      summary: Create project (manager only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ManagerCreateProjectRequest" }
+      responses:
+        "201":
+          description: Projekat kreiran.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "422":
+          description: Validaciona greška.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+  /api/manager/projects/{id}:
+    get:
+      tags: [Manager]
+      summary: Project details (manager only, must be member)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 10
+      responses:
+        "200":
+          description: Detalji projekta.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectEnvelope" }
+        "404":
+          description: Not found / no access.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+    put:
+      tags: [Manager]
+      summary: Update project (manager only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 10
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ManagerUpdateProjectRequest" }
+      responses:
+        "200":
+          description: Projekat ažuriran.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectEnvelope" }
+        "404":
+          description: Not found / no access.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "422":
+          description: Validaciona greška.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+  /api/manager/projects/{id}/members:
+    get:
+      tags: [Manager]
+      summary: List project members (manager only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 10
+      responses:
+        "200":
+          description: Lista članova.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UsersEnvelope" }
+        "404":
+          description: Not found / no access.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+    post:
+      tags: [Manager]
+      summary: Add members (manager only, admin users are not allowed)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 10
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AddMembersRequest" }
+      responses:
+        "200":
+          description: Članovi dodati.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UsersEnvelope" }
+        "422":
+          description: Validaciona greška / admin user u listi.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ValidationErrorResponse"
+                  - $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Not found / no access.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /api/manager/projects/{id}/members/{userId}:
+    delete:
+      tags: [Manager]
+      summary: Remove member (manager only, cannot remove self)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 10
+        - name: userId
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 3
+      responses:
+        "200":
+          description: Član uklonjen.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UsersEnvelope" }
+        "409":
+          description: Conflict (remove self).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "404":
+          description: Not found / user not member.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /api/manager/projects/{projectId}/tasks:
+    post:
+      tags: [Manager]
+      summary: Create task (manager only, assignee must be project member and specialist)
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 10
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ManagerTaskUpsertRequest" }
+      responses:
+        "201":
+          description: Zadatak kreiran.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaskEnvelope" }
+        "404":
+          description: Project not found / no access.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "422":
+          description: Validacija / user nije član / user nije specialist.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ValidationErrorResponse"
+                  - $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /api/manager/projects/{projectId}/tasks/{taskId}:
+    put:
+      tags: [Manager]
+      summary: Update task (manager only)
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 10
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 55
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ManagerTaskUpsertRequest" }
+      responses:
+        "200":
+          description: Zadatak ažuriran.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaskEnvelope" }
+        "404":
+          description: Task not found / no access.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "422":
+          description: Validacija / user nije član / user nije specialist.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ValidationErrorResponse"
+                  - $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /api/manager/projects/{id}/metrics:
+    get:
+      tags: [Manager]
+      summary: Project metrics (manager only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 10
+      responses:
+        "200":
+          description: Metrike projekta.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MetricsEnvelope" }
+        "404":
+          description: Not found / no access.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /api/specialist/tasks:
+    get:
+      tags: [Specialist]
+      summary: My tasks (specialist only)
+      responses:
+        "200":
+          description: Lista dodeljenih taskova.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TasksEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /api/specialist/tasks/{id}:
+    get:
+      tags: [Specialist]
+      summary: Task details (specialist only, must be assigned to me)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 55
+      responses:
+        "200":
+          description: Detalji taska + komentari + prilozi.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaskDetailsEnvelope" }
+        "404":
+          description: Not found / no access.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /api/specialist/tasks/{id}/status:
+    put:
+      tags: [Specialist]
+      summary: Update task status (specialist only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 55
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateTaskStatusRequest" }
+      responses:
+        "200":
+          description: Status ažuriran.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaskEnvelope" }
+        "404":
+          description: Not found / no access.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "422":
+          description: Validaciona greška.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /api/specialist/tasks/{taskId}/comments:
+    post:
+      tags: [Specialist]
+      summary: Add comment to my task (specialist only)
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 55
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AddCommentRequest" }
+      responses:
+        "201":
+          description: Komentar dodat.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommentEnvelope" }
+        "404":
+          description: Not found / no access.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "422":
+          description: Validaciona greška.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /api/specialist/comments/{commentId}:
+    delete:
+      tags: [Specialist]
+      summary: Delete my comment (specialist only, author-only)
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 101
+      responses:
+        "200":
+          description: Komentar obrisan.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessEmptyEnvelope" }
+        "404":
+          description: Not found.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /api/specialist/tasks/{taskId}/attachments:
+    post:
+      tags: [Specialist]
+      summary: Add attachment to my task (specialist only)
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 55
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AddAttachmentRequest" }
+      responses:
+        "201":
+          description: Prilog dodat.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttachmentEnvelope" }
+        "404":
+          description: Not found / no access.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "422":
+          description: Validaciona greška.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /api/specialist/attachments/{attachmentId}:
+    delete:
+      tags: [Specialist]
+      summary: Delete my attachment (specialist only, author-only)
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          schema: { type: integer }
+          example: 77
+      responses:
+        "200":
+          description: Prilog obrisan.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessEmptyEnvelope" }
+        "404":
+          description: Not found.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /api/specialist/uploads/0x0:
+    post:
+      tags: [Uploads]
+      summary: Upload file to 0x0.st (specialist only)
+      description: |
+        Poziva backend koji prosleđuje fajl na 0x0.st i vraća link.
+        Napomena: Tačan response možeš uskladiti sa UploadController-om.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Upload uspešan.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Upload0x0ResponseEnvelope" }
+        "201":
+          description: Upload uspešan.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Upload0x0ResponseEnvelope" }
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "422":
+          description: Validacija nije prošla.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+        "500":
+          description: Greška upload servisa.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
