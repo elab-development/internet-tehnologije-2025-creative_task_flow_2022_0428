@@ -306,4 +306,6 @@ class SpecialistController extends Controller
             'data' => (object)[],
         ]);
     }
+
+    
 }

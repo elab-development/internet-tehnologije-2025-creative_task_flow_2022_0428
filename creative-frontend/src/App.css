@@ -20,6 +20,15 @@
   --white: #ffffff;
 }
 
+a.button {
+  text-decoration: none;
+  color: inherit;
+}
+a.button:hover,
+a.button:focus {
+  text-decoration: none;
+}
+
 /* Stranica: svetla pozadina, bez crne. */
 .auth-page {
   min-height: 100vh;

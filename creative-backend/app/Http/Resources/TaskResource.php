@@ -1,7 +1,8 @@
 <?php
 
-use App\Http\Resources\ProjectResource;
+namespace App\Http\Resources;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class TaskResource extends JsonResource
@@ -11,6 +12,7 @@ class TaskResource extends JsonResource
         return [
             'id' => $this->id,
             'project_id' => $this->project_id,
+            'project_name' => $this->whenLoaded('project', fn () => $this->project->name),
             'user_id' => $this->user_id,
 
             'title' => $this->title,
@@ -20,7 +22,6 @@ class TaskResource extends JsonResource
             'due_date' => $this->due_date?->toDateString(),
 
             'user' => $this->whenLoaded('user', fn () => new UserResource($this->user)),
-            'project' => $this->whenLoaded('project', fn () => new ProjectResource($this->project)),
         ];
     }
 }

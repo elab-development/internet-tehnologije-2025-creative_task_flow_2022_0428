@@ -1,5 +1,6 @@
 import React from "react";
 import MemberCard from "./MemberCard";
+import { Link } from "react-router-dom";
 
 /**
  * ProjectSection
@@ -39,9 +40,14 @@ export default function ProjectSection({
           ) : null}
         </div>
 
+        <Link className="button" to={`/manager/projects/${project.id}`}>
+          Info o projektu
+        </Link>
+
         <button className="button" type="button" onClick={() => onAddMembersClick(project)}>
           + Add members to this project
         </button>
+  
       </div>
 
       <div className="divider" />

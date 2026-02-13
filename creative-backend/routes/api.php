@@ -5,6 +5,7 @@ use App\Http\Controllers\UserAuthController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\ManagerController;
 use App\Http\Controllers\SpecialistController;
+use App\Http\Controllers\UploadController;
 
 Route::post('/register', [UserAuthController::class, 'register']);
 Route::post('/login', [UserAuthController::class, 'login']);
@@ -56,5 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('/tasks/{taskId}/attachments', [SpecialistController::class, 'addAttachment']);
         Route::delete('/attachments/{attachmentId}', [SpecialistController::class, 'deleteAttachment']);
+
+        Route::post('/uploads/0x0', [UploadController::class, 'uploadTo0x0']);
     });
 });
